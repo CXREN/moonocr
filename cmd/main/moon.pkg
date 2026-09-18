@@ -1,5 +1,5 @@
 import {
-  "username/moonocr" @lib,
+  "CXREN/moonocr" @lib,
   "moonbitlang/core/env",
 }
 
