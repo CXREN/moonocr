@@ -1,0 +1,6 @@
+import {
+  "username/moonocr" @lib,
+  "moonbitlang/core/env",
+}
+
+pkgtype(kind: "executable")

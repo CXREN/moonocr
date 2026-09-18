@@ -1,0 +1,12 @@
+.DS_Store
+_build/
+target/
+target
+.mooncakes/
+.moonagent/
+
+# MoonBit / AI template scaffolding — keep off the public repo
+AGENTS.md
+.githooks/
+.github/
+*.mbti
