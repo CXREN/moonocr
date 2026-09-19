@@ -118,6 +118,9 @@ let line = recognize_digits(img) // 单行
 ```moonbit
 let bin = binarize_otsu(img)
 let adaptive = binarize_adaptive(img, window=15, c=20)
+let sauvola = binarize_sauvola(img, window=15, k=0.3, r=128.0)
+let niblack = binarize_niblack(img, window=15, k=-0.2)
+let straight = deskew(img, max_angle=10.0, step=1.0)
 
 let components = connected_components(bin)
 let big = filter_small(components, min_area=8)
@@ -126,6 +129,8 @@ let glyphs = merge_parts(lines[0])
 
 let grid = glyph_grid(bin, glyphs[0], size=8)
 let m = classify(grid, alphanumeric_references()) // Match?
+let w = classify_weighted(grid, alphanumeric_references(), center_weights())
+let s = classify_shifted(grid, alphanumeric_references(), size=8)
 ```
 
 ## 支持的图像格式
