@@ -43,6 +43,7 @@ pub fn cell_distance(a : Array[Int], b : Array[Int]) -> Int {
   d
 }
 
+///|
 /// Weighted Hamming distance: every cell where the two grids differ adds its
 /// weight instead of 1, so a disagreement in an important cell counts more.
 /// Cells past the end of `weights` fall back to weight 1.
@@ -84,6 +85,7 @@ pub fn classify(features : Array[Int], refs : Array[Reference]) -> Match? {
   best
 }
 
+///|
 /// A 64-cell weight grid that emphasises the glyph interior (weight `2`) over
 /// the outer ring (weight `1`). The interior holds the stroke structure that
 /// stays stable across fonts, while the border is more sensitive to noise.
@@ -99,6 +101,7 @@ pub fn center_weights() -> Array[Int] {
   w
 }
 
+///|
 /// Classify by weighted Hamming distance, giving each cell the importance in
 /// `weights`. Otherwise identical to `classify`.
 pub fn classify_weighted(
@@ -120,6 +123,7 @@ pub fn classify_weighted(
   best
 }
 
+///|
 /// Shift a `size`-by-`size` feature grid by `(dx, dy)` cells, filling the
 /// vacated border with paper (`0`). A shift of `(+1, 0)` moves the glyph
 /// right, vacating the left column.
@@ -137,6 +141,7 @@ fn shift_grid(grid : Array[Int], size : Int, dx : Int, dy : Int) -> Array[Int] {
   out
 }
 
+///|
 /// The five shifted variants of a `size`-by-`size` grid: the original plus
 /// one-cell shifts up, down, left and right. Augmenting references with these
 /// makes classification tolerant of glyphs that sit slightly off-centre.
@@ -150,6 +155,7 @@ pub fn shift_variants(grid : Array[Int], size : Int) -> Array[Array[Int]] {
   variants
 }
 
+///|
 /// Classify against an augmented reference set in which every template is
 /// expanded into its shifted variants. A glyph then matches its class as long
 /// as it is close to any one shift of that class's template.
