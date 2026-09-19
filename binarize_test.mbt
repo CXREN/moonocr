@@ -92,3 +92,34 @@ test "binarize_sauvola with k=0 thresholds at the local mean" {
   assert_eq(out.at(1, 0), 255)
   assert_eq(out.at(2, 0), 255)
 }
+
+///|
+test "binarize_niblack separates a dark pixel from a light field" {
+  // A dark centre surrounded by light neighbours is ink under Niblack.
+  let img = @moonocr.Image::new(3, 3, b"\xff\xff\xff\xff\x10\xff\xff\xff\xff")
+  let out = @moonocr.binarize_niblack(img, 3, -0.2)
+  assert_eq(out.at(1, 1), 0)
+  assert_eq(out.at(0, 0), 255)
+}
+
+///|
+test "binarize_niblack with k=0 thresholds at the local mean" {
+  // With k = 0 the threshold is exactly the local mean, so only pixels darker
+  // than the mean of their window become ink.
+  let img = @moonocr.Image::new(3, 1, b"\x00\xff\xff")
+  let out = @moonocr.binarize_niblack(img, 3, 0.0)
+  assert_eq(out.at(0, 0), 0)
+  assert_eq(out.at(1, 0), 255)
+  assert_eq(out.at(2, 0), 255)
+}
+
+///|
+test "binarize_niblack flags a pixel just below the local mean" {
+  // In a near-flat field the standard deviation is tiny, so the threshold sits
+  // just under the mean and a pixel one gray level below it is flagged as ink.
+  // Sauvola suppresses this dip instead.
+  let img = @moonocr.Image::new(3, 1, b"\xc8\xc8\xc7")
+  let out = @moonocr.binarize_niblack(img, 3, -0.2)
+  assert_eq(out.at(0, 0), 255)
+  assert_eq(out.at(2, 0), 0)
+}
