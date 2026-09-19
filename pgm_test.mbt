@@ -69,3 +69,28 @@ test "write_pgm_p5 round-trips through parse_pgm" {
   assert_eq(back.at(0, 1), 128)
   assert_eq(back.at(1, 1), 192)
 }
+
+///|
+test "parse_pgm decodes a P1 ASCII bitmap" {
+  // PBM convention: 1 is black (ink), 0 is white (paper).
+  let data = b"P1\n3 2\n1 0 1\n0 1 0\n"
+  let img = try! @moonocr.parse_pgm(data)
+  assert_eq(img.width, 3)
+  assert_eq(img.height, 2)
+  assert_eq(img.at(0, 0), 0)
+  assert_eq(img.at(1, 0), 255)
+  assert_eq(img.at(2, 0), 0)
+  assert_eq(img.at(0, 1), 255)
+  assert_eq(img.at(1, 1), 0)
+  assert_eq(img.at(2, 1), 255)
+}
+
+///|
+test "parse_pgm skips comments inside a P1 raster" {
+  let data = b"P1\n2 2\n# bitmap\n1 0\n0 1\n"
+  let img = try! @moonocr.parse_pgm(data)
+  assert_eq(img.at(0, 0), 0)
+  assert_eq(img.at(1, 0), 255)
+  assert_eq(img.at(0, 1), 255)
+  assert_eq(img.at(1, 1), 0)
+}
