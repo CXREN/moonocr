@@ -120,6 +120,54 @@ pub fn classify_weighted(
   best
 }
 
+/// Shift a `size`-by-`size` feature grid by `(dx, dy)` cells, filling the
+/// vacated border with paper (`0`). A shift of `(+1, 0)` moves the glyph
+/// right, vacating the left column.
+fn shift_grid(grid : Array[Int], size : Int, dx : Int, dy : Int) -> Array[Int] {
+  let out = Array::make(size * size, 0)
+  for y = 0; y < size; y = y + 1 {
+    for x = 0; x < size; x = x + 1 {
+      let sx = x - dx
+      let sy = y - dy
+      if sx >= 0 && sx < size && sy >= 0 && sy < size {
+        out[y * size + x] = grid[sy * size + sx]
+      }
+    }
+  }
+  out
+}
+
+/// The five shifted variants of a `size`-by-`size` grid: the original plus
+/// one-cell shifts up, down, left and right. Augmenting references with these
+/// makes classification tolerant of glyphs that sit slightly off-centre.
+pub fn shift_variants(grid : Array[Int], size : Int) -> Array[Array[Int]] {
+  let variants : Array[Array[Int]] = Array(capacity=5)
+  variants.push(grid)
+  variants.push(shift_grid(grid, size, -1, 0))
+  variants.push(shift_grid(grid, size, 1, 0))
+  variants.push(shift_grid(grid, size, 0, -1))
+  variants.push(shift_grid(grid, size, 0, 1))
+  variants
+}
+
+/// Classify against an augmented reference set in which every template is
+/// expanded into its shifted variants. A glyph then matches its class as long
+/// as it is close to any one shift of that class's template.
+pub fn classify_shifted(
+  features : Array[Int],
+  refs : Array[Reference],
+  size : Int,
+) -> Match? {
+  let expanded : Array[Reference] = Array(capacity=refs.length() * 5)
+  for i = 0; i < refs.length(); i = i + 1 {
+    let variants = shift_variants(refs[i].grid, size)
+    for j = 0; j < variants.length(); j = j + 1 {
+      expanded.push(Reference::new(refs[i].label, variants[j]))
+    }
+  }
+  classify(features, expanded)
+}
+
 ///| The ten digit templates from the built-in font, labelled `"0"` through
 ///
 
