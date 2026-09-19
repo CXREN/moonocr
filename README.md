@@ -20,7 +20,7 @@
 | 阶段 | 模块 | 说明 |
 |------|------|------|
 | 图像模型 | `image.mbt` | `Image`、BT.601 `rgb_to_gray` |
-| 解码 | `bmp.mbt` / `pgm.mbt` / `ppm.mbt` | `parse_bmp`、`parse_pgm`(P2/P4/P5)、`parse_ppm`(P3/P6) |
+| 解码 | `bmp.mbt` / `pgm.mbt` / `ppm.mbt` | `parse_bmp`、`parse_pgm`(P1/P2/P4/P5)、`parse_ppm`(P3/P6) |
 | 二值化 | `binarize.mbt` | 固定阈值 / Otsu / 积分图自适应 |
 | 分割 | `segment.mbt` | 连通域、噪声过滤、行分组、部件装配 |
 | 特征 | `feature.mbt` | 保持纵横比的 8×8 网格 |
@@ -33,7 +33,7 @@
 
 ```sh
 moon check     # 类型检查
-moon test      # 运行全部测试（59 项）
+moon test      # 运行全部测试（67 项）
 moon bench     # 运行基准
 ```
 
@@ -109,7 +109,7 @@ let m = classify(grid, alphanumeric_references()) // Match?
 ## 支持的图像格式
 
 - **BMP** — 8/24/32 位无压缩 `BI_RGB`，自底向上。
-- **PGM** — P2（ASCII 灰度）、P4（位图）、P5（二进制灰度），`maxval ≤ 255`。
+- **PGM** — P1（ASCII 位图）、P2（ASCII 灰度）、P4（位图）、P5（二进制灰度），`maxval ≤ 255`。
 - **PPM** — P3（ASCII RGB）、P6（二进制 RGB），`maxval ≤ 255`；用 BT.601 亮度转灰度。
 
 另提供 `write_pgm_p5` / `write_ppm_p6` 编码器用于往返测试。
@@ -124,7 +124,7 @@ let m = classify(grid, alphanumeric_references()) // Match?
 ## 测试
 
 ```sh
-moon test   # 59 项测试，全部通过
+moon test   # 67 项测试，全部通过
 ```
 
 ## 限制
