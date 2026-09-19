@@ -41,21 +41,25 @@ moon bench     # 运行基准
 命令行演示（每个参数是一行文本，渲染成图像后再识别回来）：
 
 ```sh
-moon run cmd/main -- Hello World 42
+moon run cmd/main -- Hello World 42 ABCabc 2026
 ```
 
 ## 示例
 
-上面的命令会输出：
+上面的命令会输出（真实终端输出，输入渲染成图像后走完整管线识别回来，大小写与数字均正确）：
 
 ```
 input:
   Hello
   World
   42
+  ABCabc
+  2026
 output: Hello
 World
 42
+ABCabc
+2026
 ```
 
 引擎内部先把文本渲染成 8×8 位图字形（`#` 为墨迹、`.` 为纸白），再走完整管线识别。例如字母 `A` 与数字 `7` 的字形：
@@ -71,6 +75,23 @@ World
 .##..##.          ...##...
 .##..##.          ...##...
 ```
+
+## 基准
+
+`moon bench` 对渲染出的测试输入逐阶段计时（本机测量，数值随机器而变，仅供数量级参考）：
+
+| 阶段 | 平均耗时 |
+|------|---------|
+| `classify`（单个字形） | ~10 µs |
+| `binarize_otsu` | ~92 µs |
+| `connected_components` | ~149 µs |
+| `binarize_adaptive` | ~327 µs |
+| `binarize_niblack` | ~496 µs |
+| `binarize_sauvola` | ~529 µs |
+| `recognize_digits`（12 位数字） | ~408 µs |
+| `recognize_text`（3 行文本） | ~469 µs |
+
+分类器缓存了 62 个内置模板（每次识别不再重算），单个字形分类约 10 µs。
 
 ## 使用教程
 
