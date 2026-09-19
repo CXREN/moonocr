@@ -163,23 +163,28 @@ pub fn binarize_adaptive(img : Image, window : Int, c : Int) -> Image {
 }
 
 ///|
-/// Summed-area table of squared pixel values, mirroring `integral_image`. It
-/// lets the local variance (and thus the standard deviation) be computed in
-/// constant time per pixel, which Sauvola thresholding needs.
-fn integral_image_sq(img : Image) -> Array[Int64] {
+/// Build both summed-area tables — of pixel values and of squared values — in
+/// a single pass. Sauvola and Niblack need both (for the local mean and
+/// variance), and one pass over the image is cheaper than two separate ones.
+fn integral_images(img : Image) -> (Array[Int64], Array[Int64]) {
   let w = img.width
   let h = img.height
   let stride = w + 1
   let table = Array::make((w + 1) * (h + 1), 0L)
+  let table_sq = Array::make((w + 1) * (h + 1), 0L)
   for y = 0; y < h; y = y + 1 {
     let mut row_sum = 0L
+    let mut row_sum_sq = 0L
     for x = 0; x < w; x = x + 1 {
       let v = img.pixels.at(y * w + x).to_int().to_int64()
-      row_sum = row_sum + v * v
+      row_sum = row_sum + v
+      row_sum_sq = row_sum_sq + v * v
       table[(y + 1) * stride + (x + 1)] = table[y * stride + (x + 1)] + row_sum
+      table_sq[(y + 1) * stride + (x + 1)] = table_sq[y * stride + (x + 1)] +
+        row_sum_sq
     }
   }
-  table
+  (table, table_sq)
 }
 
 ///|
@@ -199,8 +204,7 @@ pub fn binarize_sauvola(
   k : Double,
   r : Double,
 ) -> Image {
-  let table = integral_image(img)
-  let table_sq = integral_image_sq(img)
+  let (table, table_sq) = integral_images(img)
   let stride = img.width + 1
   let half = window / 2
   let pixels = Bytes::makei(img.pixel_count(), fn(i) {
@@ -239,8 +243,7 @@ pub fn binarize_sauvola(
 /// ink. Niblack recovers text under uneven illumination but, unlike Sauvola,
 /// can raise noise in low-variance regions.
 pub fn binarize_niblack(img : Image, window : Int, k : Double) -> Image {
-  let table = integral_image(img)
-  let table_sq = integral_image_sq(img)
+  let (table, table_sq) = integral_images(img)
   let stride = img.width + 1
   let half = window / 2
   let pixels = Bytes::makei(img.pixel_count(), fn(i) {
