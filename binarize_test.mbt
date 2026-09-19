@@ -59,3 +59,36 @@ test "binarize_adaptive preserves an ink dot on a light field" {
   assert_eq(out.at(1, 1), 0)
   assert_eq(out.at(0, 0), 255)
 }
+
+///|
+test "binarize_sauvola separates a dark pixel from a light field" {
+  // A dark centre surrounded by light neighbours is ink under Sauvola.
+  let img = @moonocr.Image::new(3, 3, b"\xff\xff\xff\xff\x10\xff\xff\xff\xff")
+  let out = @moonocr.binarize_sauvola(img, 3, 0.5, 128.0)
+  assert_eq(out.at(1, 1), 0)
+  assert_eq(out.at(0, 0), 255)
+}
+
+///|
+test "binarize_sauvola leaves a uniform field as paper" {
+  // A flat region has zero standard deviation, so the threshold drops below
+  // the mean and nothing is flagged as ink (no noise).
+  let img = @moonocr.Image::new(3, 3, b"\xc8\xc8\xc8\xc8\xc8\xc8\xc8\xc8\xc8")
+  let out = @moonocr.binarize_sauvola(img, 3, 0.5, 128.0)
+  for y = 0; y < 3; y = y + 1 {
+    for x = 0; x < 3; x = x + 1 {
+      assert_eq(out.at(x, y), 255)
+    }
+  }
+}
+
+///|
+test "binarize_sauvola with k=0 thresholds at the local mean" {
+  // With k = 0 the threshold is exactly the local mean, so only pixels darker
+  // than the mean of their window become ink.
+  let img = @moonocr.Image::new(3, 1, b"\x00\xff\xff")
+  let out = @moonocr.binarize_sauvola(img, 3, 0.0, 128.0)
+  assert_eq(out.at(0, 0), 0)
+  assert_eq(out.at(1, 0), 255)
+  assert_eq(out.at(2, 0), 255)
+}
