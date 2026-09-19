@@ -1,8 +1,8 @@
-///| A dependency-free Netpbm loader supporting the three formats most useful
+///| A dependency-free Netpbm loader supporting the formats most useful
 
-///| for tests and small tools: P2 (ASCII grayscale), P4 (bitmap) and
+///| for tests and small tools: P1 (ASCII bitmap), P2 (ASCII grayscale), P4 (bitmap) and
 
-///| P5 (binary grayscale). All three decode into a grayscale `Image`.
+///| P5 (binary grayscale). All four decode into a grayscale `Image`.
 
 ///| Advance past whitespace and `#` comments, returning the first
 
@@ -86,6 +86,30 @@ fn decode_p2(
   Image::new(width, height, Bytes::from_array(pixels))
 }
 
+///|
+/// Decode a P1 (ASCII bitmap) raster. In PBM convention `1` is black and `0`
+/// is white, which maps directly onto our ink/paper convention (`0` ink, `255`
+/// paper).
+fn decode_p1(
+  data : Bytes,
+  width : Int,
+  height : Int,
+  data_start : Int,
+) -> Image {
+  let pixels = Array::make(width * height, b'\xff')
+  let mut p = data_start
+  for i = 0; i < width * height; i = i + 1 {
+    let (v, q) = read_token_int(data, p)
+    if v == 1 {
+      pixels[i] = b'\x00'
+    } else {
+      pixels[i] = b'\xff'
+    }
+    p = q
+  }
+  Image::new(width, height, Bytes::from_array(pixels))
+}
+
 ///| Decode a P4 (packed bitmap) raster. A set bit is black (`0`) and a clear
 
 ///|
@@ -111,7 +135,7 @@ fn decode_p4(
   Image::new(width, height, pixels)
 }
 
-///| Parse a Netpbm image (`P2`, `P4` or `P5`) into a grayscale `Image`.
+///| Parse a Netpbm image (`P1`, `P2`, `P4` or `P5`) into a grayscale `Image`.
 ///
 
 ///| Raises `DecodeError` describing the problem when the input is malformed or
@@ -141,7 +165,7 @@ pub fn write_pgm_p5(img : Image) -> Bytes {
 }
 
 ///|
-/// Parse a Netpbm image (`P2`, `P4` or `P5`) into a grayscale `Image`.
+/// Parse a Netpbm image (`P1`, `P2`, `P4` or `P5`) into a grayscale `Image`.
 ///
 pub fn parse_pgm(data : Bytes) -> Image raise DecodeError {
   if data.length() < 2 {
@@ -173,7 +197,10 @@ pub fn parse_pgm(data : Bytes) -> Image raise DecodeError {
   } else if magic == 0x34 {
     // P4: packed bitmap, no maxval token.
     decode_p4(data, width, height, pos2 + 1)
+  } else if magic == 0x31 {
+    // P1: ASCII bitmap (1 = black, 0 = white), no maxval token.
+    decode_p1(data, width, height, pos2)
   } else {
-    raise DecodeError("PGM: unsupported format (only P2, P4 and P5)")
+    raise DecodeError("PGM: unsupported format (only P1, P2, P4 and P5)")
   }
 }
