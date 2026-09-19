@@ -227,3 +227,43 @@ pub fn binarize_sauvola(
   })
   Image::new(img.width, img.height, pixels)
 }
+
+///|
+/// Niblack local binarization. Each pixel's threshold is the local mean plus a
+/// multiple of the local standard deviation:
+///
+///   T = m + k * s
+///
+/// `k` is usually negative (around `-0.2`), placing the threshold below the
+/// mean so that only pixels clearly darker than their neighbourhood become
+/// ink. Niblack recovers text under uneven illumination but, unlike Sauvola,
+/// can raise noise in low-variance regions.
+pub fn binarize_niblack(img : Image, window : Int, k : Double) -> Image {
+  let table = integral_image(img)
+  let table_sq = integral_image_sq(img)
+  let stride = img.width + 1
+  let half = window / 2
+  let pixels = Bytes::makei(img.pixel_count(), fn(i) {
+    let x = i % img.width
+    let y = i / img.width
+    let x0 = if x - half < 0 { 0 } else { x - half }
+    let y0 = if y - half < 0 { 0 } else { y - half }
+    let x1 = if x + half + 1 > img.width { img.width } else { x + half + 1 }
+    let y1 = if y + half + 1 > img.height { img.height } else { y + half + 1 }
+    let area = (x1 - x0) * (y1 - y0)
+    let area_d = area.to_double()
+    let mean = window_sum(table, stride, x0, y0, x1, y1).to_double() / area_d
+    let mean_sq = window_sum(table_sq, stride, x0, y0, x1, y1).to_double() /
+      area_d
+    let variance = mean_sq - mean * mean
+    let std = if variance > 0.0 { variance.sqrt() } else { 0.0 }
+    let threshold = mean + k * std
+    let v = img.pixels.at(i).to_int().to_double()
+    if v < threshold {
+      b'\x00'
+    } else {
+      b'\xff'
+    }
+  })
+  Image::new(img.width, img.height, pixels)
+}
