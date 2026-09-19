@@ -21,7 +21,8 @@
 |------|------|------|
 | 图像模型 | `image.mbt` | `Image`、BT.601 `rgb_to_gray` |
 | 解码 | `bmp.mbt` / `pgm.mbt` / `ppm.mbt` | `parse_bmp`、`parse_pgm`(P1/P2/P4/P5)、`parse_ppm`(P3/P6) |
-| 二值化 | `binarize.mbt` | 固定阈值 / Otsu / 积分图自适应 |
+| 二值化 | `binarize.mbt` | 固定阈值 / Otsu / 自适应 / Sauvola / Niblack |
+| 矫正 | `deskew.mbt` | 投影直方图、图像旋转、倾斜检测与 deskew |
 | 分割 | `segment.mbt` | 连通域、噪声过滤、行分组、部件装配 |
 | 特征 | `feature.mbt` | 保持纵横比的 8×8 网格 |
 | 分类 | `classify.mbt` | 汉明距离最近邻 |
@@ -33,7 +34,7 @@
 
 ```sh
 moon check     # 类型检查
-moon test      # 运行全部测试（67 项）
+moon test      # 运行全部测试（74 项）
 moon bench     # 运行基准
 ```
 
@@ -116,7 +117,8 @@ let m = classify(grid, alphanumeric_references()) // Match?
 
 ## 工作原理
 
-- **二值化**：Otsu 求全局阈值；自适应版本用积分图求局部窗口均值，应对光照不均。
+- **二值化**：Otsu 求全局阈值；自适应版用积分图求局部窗口均值；Sauvola/Niblack 用局部均值与标准差应对光照不均。
+- **矫正**：`deskew` 对轻微旋转的文本求水平投影直方图，在候选角度里选方差最大者旋转回正。
 - **分割**：8 连通泛洪给墨迹区域打标签；按垂直重叠合并成行；`merge_parts` 把被细缝拆开的字形（如 `i`/`j` 的点）重新拼回；`filter_small` 滤除噪声。
 - **特征**：每个字形的包围盒按保持纵横比的方式下采样到 8×8 网格，每格记录是否有半数以上像素为墨。
 - **分类**：网格间汉明距离最近邻。参考模板走同一条特征管线生成，因此干净渲染必然与自身距离为 0。
@@ -124,7 +126,7 @@ let m = classify(grid, alphanumeric_references()) // Match?
 ## 测试
 
 ```sh
-moon test   # 67 项测试，全部通过
+moon test   # 74 项测试，全部通过
 ```
 
 ## 限制
