@@ -174,12 +174,10 @@ pub fn classify_shifted(
   classify(features, expanded)
 }
 
-///| The ten digit templates from the built-in font, labelled `"0"` through
-///
-
 ///|
-/// `"9"`.
-pub fn digit_references() -> Array[Reference] {
+/// Build the ten digit templates from the built-in font, labelled `"0"`
+/// through `"9"`. Split out of `digit_references` so the result can be cached.
+fn build_digit_references() -> Array[Reference] {
   let refs : Array[Reference] = Array(capacity=10)
   for ch in "0123456789" {
     refs.push(Reference::new(ch.to_string(), char_grid(ch)))
@@ -187,15 +185,36 @@ pub fn digit_references() -> Array[Reference] {
   refs
 }
 
-///| The 62 templates for digits `0`-`9` and letters `A`-`Z` / `a`-`z`, from
-///
+///|
+/// The ten digit templates, computed once and cached.
+let digit_refs_cache : Array[Reference] = build_digit_references()
 
 ///|
-/// the built-in font.
-pub fn alphanumeric_references() -> Array[Reference] {
+/// The ten digit templates from the built-in font, labelled `"0"` through
+/// `"9"`.
+pub fn digit_references() -> Array[Reference] {
+  digit_refs_cache
+}
+
+///|
+/// Build the 62 templates for digits `0`-`9` and letters `A`-`Z` / `a`-`z`
+/// from the built-in font. Split out of `alphanumeric_references` for caching.
+fn build_alphanumeric_references() -> Array[Reference] {
   let refs : Array[Reference] = Array(capacity=62)
   for ch in "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" {
     refs.push(Reference::new(ch.to_string(), char_grid(ch)))
   }
   refs
+}
+
+///|
+/// The 62 templates for digits `0`-`9` and letters `A`-`Z` / `a`-`z`, computed
+/// once and cached.
+let alphanumeric_refs_cache : Array[Reference] = build_alphanumeric_references()
+
+///|
+/// The 62 templates for digits `0`-`9` and letters `A`-`Z` / `a`-`z`, from
+/// the built-in font.
+pub fn alphanumeric_references() -> Array[Reference] {
+  alphanumeric_refs_cache
 }
